@@ -28,7 +28,7 @@ Supports Japanese 🇯🇵 and English 🇬🇧 — switchable with one tap.
 
 ## 🚀 Live Demo / デモ
 
-👉 [Open App / アプリを開く](https://あなたのユーザー名.github.io/clock-trainer/)
+👉 [Open App / アプリを開く](https://meymao.github.io/clock-trainer/)
 
 ---
 
