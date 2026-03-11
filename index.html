@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>とけいをよもう</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Nunito:wght@700;900&display=swap');
+
+  :root {
+    --bg: #FFF8F0;
+    --clock-face: #FFFDF9;
+    --clock-border: #4A90D9;
+    --clock-shadow: rgba(74,144,217,0.18);
+    --hour-hand: #E05A2B;
+    --minute-hand: #4A90D9;
+    --center: #333;
+    --tick-major: #555;
+    --tick-minor: #bbb;
+    --number: #333;
+    --btn-now: #F0C030;
+    --btn-now-hover: #E0B020;
+    --btn-ask: #4A90D9;
+    --btn-ask-hover: #3578C0;
+    --btn-disabled: #CCC;
+    --btn-text: #fff;
+    --btn-now-text: #333;
+    --accent: #E05A2B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Sans JP', sans-serif;
+    padding: clamp(12px, 3vmin, 28px);
+    background-image: radial-gradient(circle at 20% 20%, #FFECD0 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, #D8EEFF 0%, transparent 50%);
+  }
+
+  h1 {
+    font-family: 'Nunito', 'Noto Sans JP', sans-serif;
+    font-size: clamp(1.4rem, 3.5vmin, 2.2rem);
+    font-weight: 900;
+    color: var(--clock-border);
+    letter-spacing: 0.04em;
+    margin-bottom: clamp(12px, 2.5vmin, 28px);
+    text-shadow: 0 2px 0 rgba(74,144,217,0.15);
+  }
+
+  /* ── Layout: portrait = column, landscape = row ── */
+  .main-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(16px, 3vmin, 32px);
+    width: 100%;
+  }
+
+  @media (orientation: landscape) and (min-width: 600px) {
+    .main-layout {
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(24px, 5vw, 64px);
+    }
+    h1 { margin-bottom: 0; }
+  }
+
+  .clock-container {
+    position: relative;
+    /* Portrait: use smaller of 72vw or 62vh; Landscape: 56vh */
+    width: min(72vw, 62vh, 560px);
+    height: min(72vw, 62vh, 560px);
+    flex-shrink: 0;
+  }
+
+  @media (orientation: landscape) and (min-width: 600px) {
+    .clock-container {
+      width: min(56vh, 52vw, 560px);
+      height: min(56vh, 52vw, 560px);
+    }
+  }
+
+  svg#clock {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  /* Hand hover/drag cursors */
+  #hour-hand-group { cursor: grab; }
+  #minute-hand-group { cursor: grab; }
+  #hour-hand-group:active { cursor: grabbing; }
+  #minute-hand-group:active { cursor: grabbing; }
+
+  /* Hit area transparency */
+  .hand-hit { fill: transparent; }
+
+  /* Right panel (buttons + bubble) in landscape */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(12px, 2.5vmin, 24px);
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vmin, 20px);
+    align-items: center;
+  }
+
+  @media (orientation: portrait) {
+    .buttons { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  }
+
+  button {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2.8vmin, 1.5rem);
+    padding: clamp(14px, 2.2vmin, 22px) clamp(24px, 4vmin, 44px);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    letter-spacing: 0.02em;
+    min-width: clamp(180px, 28vmin, 280px);
+    white-space: nowrap;
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+
+  #btn-now {
+    background: var(--btn-now);
+    color: var(--btn-now-text);
+  }
+  #btn-now:hover { background: var(--btn-now-hover); }
+
+  #btn-ask {
+    background: var(--btn-ask);
+    color: var(--btn-text);
+  }
+  #btn-ask:hover:not(:disabled) { background: var(--btn-ask-hover); }
+  #btn-ask:disabled {
+    background: var(--btn-disabled);
+    color: #999;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  .speech-bubble {
+    background: white;
+    border: 3px solid var(--clock-border);
+    border-radius: 20px;
+    padding: clamp(10px, 2vmin, 18px) clamp(20px, 4vmin, 36px);
+    font-size: clamp(1.4rem, 4vmin, 2.2rem);
+    font-weight: 900;
+    color: var(--accent);
+    min-height: clamp(52px, 8vmin, 80px);
+    min-width: clamp(180px, 28vmin, 300px);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(74,144,217,0.12);
+    transition: opacity 0.3s;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .speech-bubble.visible { opacity: 1; }
+
+  /* Language toggle */
+  .lang-toggle {
+    position: fixed;
+    top: clamp(10px, 2vmin, 18px);
+    right: clamp(10px, 2vmin, 18px);
+    display: flex;
+    background: white;
+    border: 2px solid #D8EEFF;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(74,144,217,0.15);
+    z-index: 100;
+  }
+  .lang-toggle button {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(0.85rem, 2vmin, 1rem);
+    padding: 6px 16px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    box-shadow: none;
+    min-width: unset;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  .lang-toggle button.active {
+    background: #4A90D9;
+    color: white;
+  }
+  .lang-toggle button:active:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button id="btn-lang-ja" class="active">JP</button>
+  <button id="btn-lang-en">EN</button>
+</div>
+
+<h1 id="app-title">🕐 とけいをよもう</h1>
+
+<div class="main-layout">
+<div class="clock-container">
+  <svg id="clock" viewBox="0 0 200 200">
+    <!-- Face shadow -->
+    <defs>
+      <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(74,144,217,0.2)"/>
+      </filter>
+    </defs>
+
+    <!-- Clock face -->
+    <circle cx="100" cy="100" r="95" fill="white" stroke="#4A90D9" stroke-width="5" filter="url(#shadow)"/>
+    <circle cx="100" cy="100" r="91" fill="#FFFDF9" stroke="#D8EEFF" stroke-width="1.5"/>
+
+    <!-- Minute ticks and numbers -->
+    <g id="ticks"></g>
+    <g id="minute-numbers"></g>
+    <g id="hour-numbers"></g>
+
+    <!-- Hands (rendered after face) -->
+    <!-- Hour hand group with wide hit area -->
+    <g id="hour-hand-group">
+      <line id="hour-hand" x1="100" y1="100" x2="100" y2="42"
+            stroke="#E05A2B" stroke-width="7" stroke-linecap="round"/>
+      <!-- hit area -->
+      <line id="hour-hit" x1="100" y1="100" x2="100" y2="42"
+            stroke="transparent" stroke-width="22" stroke-linecap="round" class="hand-hit"/>
+    </g>
+
+    <!-- Minute hand group -->
+    <g id="minute-hand-group">
+      <line id="minute-hand" x1="100" y1="100" x2="100" y2="22"
+            stroke="#4A90D9" stroke-width="5" stroke-linecap="round"/>
+      <line id="minute-hit" x1="100" y1="100" x2="100" y2="22"
+            stroke="transparent" stroke-width="22" stroke-linecap="round" class="hand-hit"/>
+    </g>
+
+    <!-- Center dot -->
+    <circle cx="100" cy="100" r="6" fill="#333"/>
+    <circle cx="100" cy="100" r="3" fill="white"/>
+  </svg>
+</div><!-- /.clock-container -->
+
+<div class="controls">
+  <div class="buttons">
+    <button id="btn-now">🔊 いまなんじ？</button>
+    <button id="btn-ask" disabled>🔊 これなんじ？</button>
+  </div>
+  <div class="speech-bubble" id="speech-bubble">　</div>
+</div>
+</div><!-- /.main-layout -->
+
+<script>
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const CX = 100, CY = 100;
+const HOUR_LEN = 58, MINUTE_LEN = 78;
+
+// === Draw ticks and numbers ===
+const ticksG = document.getElementById('ticks');
+const minNumG = document.getElementById('minute-numbers');
+const hourNumG = document.getElementById('hour-numbers');
+
+for (let i = 0; i < 60; i++) {
+  const angle = (i / 60) * 2 * Math.PI - Math.PI / 2;
+  const isMajor = i % 5 === 0;
+  const r1 = isMajor ? 84 : 88;
+  const r2 = 91;
+  const x1 = CX + r1 * Math.cos(angle);
+  const y1 = CY + r1 * Math.sin(angle);
+  const x2 = CX + r2 * Math.cos(angle);
+  const y2 = CY + r2 * Math.sin(angle);
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+  line.setAttribute('stroke', isMajor ? '#888' : '#ccc');
+  line.setAttribute('stroke-width', isMajor ? '2' : '1');
+  ticksG.appendChild(line);
+
+  // Minute numbers (every minute, small)
+  const rNum = 79;
+  const xn = CX + rNum * Math.cos(angle);
+  const yn = CY + rNum * Math.sin(angle);
+  const t = document.createElementNS(SVG_NS, 'text');
+  t.setAttribute('x', xn);
+  t.setAttribute('y', yn);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('dominant-baseline', 'middle');
+  t.setAttribute('font-size', isMajor ? '6' : '4.5');
+  t.setAttribute('font-family', 'Nunito, sans-serif');
+  t.setAttribute('font-weight', '700');
+  t.setAttribute('fill', isMajor ? '#4A90D9' : '#aac');
+  t.textContent = i;
+  minNumG.appendChild(t);
+}
+
+// Hour numbers (large, inner)
+for (let h = 1; h <= 12; h++) {
+  const angle = (h / 12) * 2 * Math.PI - Math.PI / 2;
+  const r = 63;
+  const x = CX + r * Math.cos(angle);
+  const y = CY + r * Math.sin(angle);
+  const t = document.createElementNS(SVG_NS, 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('dominant-baseline', 'middle');
+  t.setAttribute('font-size', '12');
+  t.setAttribute('font-family', 'Nunito, sans-serif');
+  t.setAttribute('font-weight', '900');
+  t.setAttribute('fill', '#333');
+  t.textContent = h;
+  hourNumG.appendChild(t);
+}
+
+// === State ===
+let displayHours = 0, displayMinutes = 0; // what the clock shows
+let realHours = 0, realMinutes = 0;
+let synced = true;
+
+function getNow() {
+  const now = new Date();
+  return { h: now.getHours() % 12, m: now.getMinutes() };
+}
+
+function setHandsFromTime(h, m) {
+  displayHours = h;
+  displayMinutes = m;
+  updateHandPositions();
+  checkSync();
+}
+
+function updateHandPositions() {
+  // Minute hand angle
+  const mAngle = (displayMinutes / 60) * 2 * Math.PI - Math.PI / 2;
+  const mx = CX + MINUTE_LEN * Math.cos(mAngle);
+  const my = CY + MINUTE_LEN * Math.sin(mAngle);
+  document.getElementById('minute-hand').setAttribute('x2', mx);
+  document.getElementById('minute-hand').setAttribute('y2', my);
+  document.getElementById('minute-hit').setAttribute('x2', mx);
+  document.getElementById('minute-hit').setAttribute('y2', my);
+
+  // Hour hand angle (moves with minutes too)
+  const hAngle = ((displayHours + displayMinutes / 60) / 12) * 2 * Math.PI - Math.PI / 2;
+  const hx = CX + HOUR_LEN * Math.cos(hAngle);
+  const hy = CY + HOUR_LEN * Math.sin(hAngle);
+  document.getElementById('hour-hand').setAttribute('x2', hx);
+  document.getElementById('hour-hand').setAttribute('y2', hy);
+  document.getElementById('hour-hit').setAttribute('x2', hx);
+  document.getElementById('hour-hit').setAttribute('y2', hy);
+}
+
+function checkSync() {
+  const {h, m} = getNow();
+  realHours = h; realMinutes = m;
+  const rH = Math.round(displayHours) % 12;
+  const rM = Math.round(displayMinutes) % 60;
+  synced = (rH === realHours && rM === realMinutes);
+  document.getElementById('btn-ask').disabled = synced;
+}
+
+// === Drag logic ===
+const svg = document.getElementById('clock');
+let dragging = null; // 'hour' | 'minute' | null
+let lastAngle = null; // previous drag angle (radians) for delta-based tracking
+
+function getSVGCoords(e) {
+  const rect = svg.getBoundingClientRect();
+  const client = e.touches ? e.touches[0] : e;
+  const x = (client.clientX - rect.left) / rect.width * 200;
+  const y = (client.clientY - rect.top) / rect.height * 200;
+  return {x, y};
+}
+
+function getAngle(x, y) {
+  return Math.atan2(y - CY, x - CX);
+}
+
+// Normalize angle delta to [-π, π]
+function normalizeDelta(delta) {
+  while (delta > Math.PI) delta -= 2 * Math.PI;
+  while (delta < -Math.PI) delta += 2 * Math.PI;
+  return delta;
+}
+
+function angleToHour(angle) {
+  let deg = (angle * 180 / Math.PI + 90 + 360) % 360;
+  return Math.round(deg / 30) % 12;
+}
+
+function onPointerDown(e, handType) {
+  e.preventDefault();
+  dragging = handType;
+  // Always snap displayHours to integer on drag start
+  // so the hour hand never carries hidden fractional state.
+  displayHours = Math.round(displayHours) % 12;
+  svg._hourAcc = 0;
+  const {x, y} = getSVGCoords(e);
+  lastAngle = getAngle(x, y);
+  svg.setPointerCapture && svg.setPointerCapture(e.pointerId);
+}
+
+document.getElementById('minute-hand-group').addEventListener('pointerdown', e => onPointerDown(e, 'minute'));
+document.getElementById('hour-hand-group').addEventListener('pointerdown', e => {
+  onPointerDown(e, 'hour');
+});
+
+// We listen on SVG for move/up
+svg.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  e.preventDefault();
+  const {x, y} = getSVGCoords(e);
+  const angle = getAngle(x, y);
+  const delta = normalizeDelta(angle - lastAngle);
+  lastAngle = angle;
+
+  if (dragging === 'minute') {
+    const minuteDelta = delta / (2 * Math.PI) * 60;
+    const prevMinutes = displayMinutes;
+    displayMinutes = ((displayMinutes + minuteDelta) % 60 + 60) % 60;
+
+    // Carry over to hour when crossing 0
+    const crossed = prevMinutes - displayMinutes;
+    if (crossed > 30) {
+      displayHours = (Math.round(displayHours) + 1) % 12;
+    } else if (crossed < -30) {
+      displayHours = (Math.round(displayHours) - 1 + 12) % 12;
+    }
+  } else {
+    // Hour hand: accumulate drag and step by whole hours only
+    const hourDelta = delta / (2 * Math.PI) * 12;
+    svg._hourAcc += hourDelta;
+    const stepped = Math.round(svg._hourAcc);
+    if (stepped !== 0) {
+      displayHours = ((Math.round(displayHours) + stepped) % 12 + 12) % 12;
+      svg._hourAcc -= stepped;
+    }
+  }
+
+  updateHandPositions();
+  checkSync();
+  hideBubble();
+});
+
+svg.addEventListener('pointerup', e => { dragging = null; });
+svg.addEventListener('pointercancel', e => { dragging = null; });
+
+// === i18n ===
+let lang = 'ja';
+
+const I18N = {
+  ja: {
+    title: '🕐 とけいをよもう',
+    btnNow: '🔊 いまなんじ？',
+    btnAsk: '🔊 これなんじ？',
+    ttsLang: 'ja-JP',
+    ttsRate: 0.85,
+    ttsPitch: 1.1,
+    timeText: (h, m) => {
+      const ones = m % 10;
+      const pun = (ones === 1 || ones === 6 || ones === 8 || ones === 0);
+      const suffix = pun ? 'ぷん' : 'ふん';
+      return m === 0 ? `${h}じ ちょうど！` : `${h}じ ${m}${suffix}！`;
+    }
+  },
+  en: {
+    title: '🕐 What time is it?',
+    btnNow: '🔊 What time is it?',
+    btnAsk: '🔊 What time is this?',
+    ttsLang: 'en-US',
+    ttsRate: 0.85,
+    ttsPitch: 1.1,
+    timeText: (h, m) => {
+      const ONES = ['','one','two','three','four','five','six','seven','eight','nine',
+                    'ten','eleven','twelve','thirteen','fourteen','fifteen',
+                    'sixteen','seventeen','eighteen','nineteen'];
+      const TENS = ['','','twenty','thirty','forty','fifty'];
+      const hourWord = ONES[h];
+      if (m === 0) return `${hourWord} o'clock!`;
+      let minWord;
+      if (m < 10)       minWord = `oh ${ONES[m]}`;
+      else if (m < 20)  minWord = ONES[m];
+      else {
+        const t = Math.floor(m / 10), o = m % 10;
+        minWord = TENS[t] + (o ? `-${ONES[o]}` : '');
+      }
+      return `${hourWord} ${minWord}!`;
+    }
+  }
+};
+
+function applyLang() {
+  const t = I18N[lang];
+  document.getElementById('app-title').textContent = t.title;
+  document.getElementById('btn-now').textContent = t.btnNow;
+  document.getElementById('btn-ask').textContent = t.btnAsk;
+  document.getElementById('btn-lang-ja').classList.toggle('active', lang === 'ja');
+  document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+  hideBubble();
+}
+
+document.getElementById('btn-lang-ja').addEventListener('click', () => { lang = 'ja'; applyLang(); });
+document.getElementById('btn-lang-en').addEventListener('click', () => { lang = 'en'; applyLang(); });
+
+// === Speech ===
+function speakTime(h, m) {
+  const hour12 = h === 0 ? 12 : h;
+  const t = I18N[lang];
+  const text = t.timeText(hour12, m);
+  showBubble(text);
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = t.ttsLang;
+    utterance.rate = t.ttsRate;
+    utterance.pitch = t.ttsPitch;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function showBubble(text) {
+  const b = document.getElementById('speech-bubble');
+  b.textContent = text;
+  b.classList.add('visible');
+}
+
+function hideBubble() {
+  document.getElementById('speech-bubble').classList.remove('visible');
+}
+
+document.getElementById('btn-now').addEventListener('click', () => {
+  const {h, m} = getNow();
+  setHandsFromTime(h, m);
+  speakTime(h, m);
+});
+
+document.getElementById('btn-ask').addEventListener('click', () => {
+  if (!document.getElementById('btn-ask').disabled) {
+    speakTime(Math.round(displayHours) % 12, Math.round(displayMinutes) % 60);
+  }
+});
+
+// === Init ===
+function init() {
+  const {h, m} = getNow();
+  realHours = h; realMinutes = m;
+  displayHours = h; displayMinutes = m;
+  updateHandPositions();
+  checkSync();
+}
+
+init();
+
+// Update real time every 10 seconds to keep sync check accurate
+setInterval(() => {
+  checkSync();
+}, 10000);
+</script>
+</body>
+</html>
