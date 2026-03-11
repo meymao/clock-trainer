@@ -12,7 +12,7 @@ Supports Japanese 🇯🇵 and English 🇬🇧 — switchable with one tap.
 
 - Draggable hour and minute hands
 - Minute-by-minute number display
-- Voice readout in Japanese and English
+- Voice readout in Japanese and English, auto-selecting the best available voice per browser
 - Responsive layout for iPad and tablet use
 - No installation required — runs in any browser
 
@@ -20,7 +20,7 @@ Supports Japanese 🇯🇵 and English 🇬🇧 — switchable with one tap.
 
 - 短針・長針をドラッグして動かせる
 - 1分刻みの数字表示
-- 日本語・英語の音声読み上げ
+- 日本語・英語の音声読み上げ（ブラウザに応じて最適な音声を自動選択）
 - iPad・タブレット向けのレスポンシブレイアウト
 - インストール不要 — ブラウザだけで動く
 
