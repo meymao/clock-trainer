@@ -383,9 +383,8 @@ function updateHandPositions() {
 function checkSync() {
   const {h, m} = getNow();
   realHours = h; realMinutes = m;
-  const rH = Math.round(displayHours) % 12;
-  const rM = Math.round(displayMinutes) % 60;
-  synced = (rH === realHours && rM === realMinutes);
+  const { h: dH, m: dM } = getDisplayTime();
+  synced = (dH === realHours && dM === realMinutes);
   document.getElementById('btn-ask').disabled = synced;
 }
 
@@ -636,9 +635,22 @@ document.getElementById('btn-now').addEventListener('click', () => {
 
 document.getElementById('btn-ask').addEventListener('click', () => {
   if (!document.getElementById('btn-ask').disabled) {
-    speakTime(Math.round(displayHours) % 12, Math.round(displayMinutes) % 60);
+    const { h, m } = getDisplayTime();
+    speakTime(h, m);
   }
 });
+
+// Calculate the actual displayed time from current hand positions
+function getDisplayTime() {
+  const m = Math.round(displayMinutes) % 60;
+  // Use floor for hours — the hour only changes when minute hand crosses 0
+  let h = Math.floor(displayHours) % 12;
+  // Only carry over if minutes rounded up to 60
+  if (Math.round(displayMinutes) >= 60) {
+    h = (h + 1) % 12;
+  }
+  return { h, m };
+}
 
 // === Init ===
 function init() {
