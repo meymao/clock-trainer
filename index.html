@@ -487,10 +487,12 @@ const I18N = {
     ttsRate: 0.85,
     ttsPitch: 1.1,
     timeText: (h, m) => {
+      const HOUR_READ = ['','いち','に','さん','よ','ご','ろく','しち','はち','く','じゅう','じゅういち','じゅうに'];
       const ones = m % 10;
       const pun = (ones === 1 || ones === 6 || ones === 8 || ones === 0);
       const suffix = pun ? 'ぷん' : 'ふん';
-      return m === 0 ? `${h}じ ちょうど！` : `${h}じ ${m}${suffix}！`;
+      const hourWord = HOUR_READ[h];
+      return m === 0 ? `${hourWord}じ ちょうど！` : `${hourWord}じ ${m}${suffix}！`;
     }
   },
   en: {
