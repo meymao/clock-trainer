@@ -547,6 +547,60 @@ function applyLang() {
 document.getElementById('btn-lang-ja').addEventListener('click', () => { lang = 'ja'; applyLang(); });
 document.getElementById('btn-lang-en').addEventListener('click', () => { lang = 'en'; applyLang(); });
 
+// === Voice selection ===
+// Cache selected voices after first load
+const selectedVoice = { ja: null, en: null };
+
+function pickVoice(langCode) {
+  const voices = window.speechSynthesis.getVoices();
+  if (langCode === 'ja-JP') {
+    // Priority: Kyoko (Safari iPad/Mac) > Otoya > Google 日本語 > any ja-JP
+    const priorities = [
+      v => /kyoko/i.test(v.name),
+      v => /otoya/i.test(v.name),
+      v => v.lang === 'ja-JP' && /google/i.test(v.name),
+      v => v.lang === 'ja-JP',
+      v => v.lang.startsWith('ja'),
+    ];
+    for (const test of priorities) {
+      const match = voices.find(test);
+      if (match) return match;
+    }
+  } else {
+    // en-US priority: Samantha (Safari) > Google US English > any en-US
+    const priorities = [
+      v => /samantha/i.test(v.name),
+      v => v.lang === 'en-US' && /google/i.test(v.name),
+      v => /karen|moira|tessa/i.test(v.name), // other natural Safari voices
+      v => v.lang === 'en-US',
+      v => v.lang.startsWith('en'),
+    ];
+    for (const test of priorities) {
+      const match = voices.find(test);
+      if (match) return match;
+    }
+  }
+  return null;
+}
+
+function getVoice(langCode) {
+  const key = langCode.startsWith('ja') ? 'ja' : 'en';
+  if (!selectedVoice[key]) {
+    selectedVoice[key] = pickVoice(langCode);
+  }
+  return selectedVoice[key];
+}
+
+// Voices load asynchronously — pre-select on load
+if ('speechSynthesis' in window) {
+  const tryLoad = () => {
+    selectedVoice.ja = pickVoice('ja-JP');
+    selectedVoice.en = pickVoice('en-US');
+  };
+  if (speechSynthesis.getVoices().length) tryLoad();
+  else speechSynthesis.addEventListener('voiceschanged', tryLoad);
+}
+
 // === Speech ===
 function speakTime(h, m) {
   const hour12 = h === 0 ? 12 : h;
@@ -561,6 +615,8 @@ function speakTime(h, m) {
     utterance.lang = t.ttsLang;
     utterance.rate = t.ttsRate;
     utterance.pitch = t.ttsPitch;
+    const voice = getVoice(t.ttsLang);
+    if (voice) utterance.voice = voice;
     window.speechSynthesis.speak(utterance);
   }
 }
