@@ -518,18 +518,15 @@ const I18N = {
                     'sixteen','seventeen','eighteen','nineteen'];
       const TENS = ['','','twenty','thirty','forty','fifty'];
       const hourWord = ONES[h];
+      if (m === 0) return `${hourWord} o'clock!`;
       let minWord;
-      if (m === 0)      minWord = null;
-      else if (m < 10)  minWord = `oh ${ONES[m]}`;
+      if (m < 10)       minWord = `oh ${ONES[m]}`;
       else if (m < 20)  minWord = ONES[m];
       else {
         const t = Math.floor(m / 10), o = m % 10;
         minWord = TENS[t] + (o ? `-${ONES[o]}` : '');
       }
-      const mm = String(m).padStart(2, '0');
-      const display = m === 0 ? `${h}:00!` : `${h}:${mm}!`;
-      const tts     = m === 0 ? `${hourWord} o'clock!` : `${hourWord} ${minWord}!`;
-      return { display, tts };
+      return `${hourWord} ${minWord}!`;
     }
   }
 };
