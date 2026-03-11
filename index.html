@@ -486,6 +486,12 @@ const I18N = {
     ttsLang: 'ja-JP',
     ttsRate: 0.85,
     ttsPitch: 1.1,
+    displayText: (h, m) => {
+      const ones = m % 10;
+      const pun = (ones === 1 || ones === 6 || ones === 8 || ones === 0);
+      const suffix = pun ? 'ぷん' : 'ふん';
+      return m === 0 ? `${h}じ ちょうど！` : `${h}じ ${m}${suffix}！`;
+    },
     timeText: (h, m) => {
       const HOUR_READ = ['','いち','に','さん','よ','ご','ろく','しち','はち','く','じゅう','じゅういち','じゅうに'];
       const ones = m % 10;
@@ -502,21 +508,28 @@ const I18N = {
     ttsLang: 'en-US',
     ttsRate: 0.85,
     ttsPitch: 1.1,
+    displayText: (h, m) => {
+      const mm = String(m).padStart(2, '0');
+      return m === 0 ? `${h}:00!` : `${h}:${mm}!`;
+    },
     timeText: (h, m) => {
       const ONES = ['','one','two','three','four','five','six','seven','eight','nine',
                     'ten','eleven','twelve','thirteen','fourteen','fifteen',
                     'sixteen','seventeen','eighteen','nineteen'];
       const TENS = ['','','twenty','thirty','forty','fifty'];
       const hourWord = ONES[h];
-      if (m === 0) return `${hourWord} o'clock!`;
       let minWord;
-      if (m < 10)       minWord = `oh ${ONES[m]}`;
+      if (m === 0)      minWord = null;
+      else if (m < 10)  minWord = `oh ${ONES[m]}`;
       else if (m < 20)  minWord = ONES[m];
       else {
         const t = Math.floor(m / 10), o = m % 10;
         minWord = TENS[t] + (o ? `-${ONES[o]}` : '');
       }
-      return `${hourWord} ${minWord}!`;
+      const mm = String(m).padStart(2, '0');
+      const display = m === 0 ? `${h}:00!` : `${h}:${mm}!`;
+      const tts     = m === 0 ? `${hourWord} o'clock!` : `${hourWord} ${minWord}!`;
+      return { display, tts };
     }
   }
 };
@@ -538,12 +551,13 @@ document.getElementById('btn-lang-en').addEventListener('click', () => { lang = 
 function speakTime(h, m) {
   const hour12 = h === 0 ? 12 : h;
   const t = I18N[lang];
-  const text = t.timeText(hour12, m);
-  showBubble(text);
+  const displayText = t.displayText(hour12, m);
+  const ttsText = t.timeText(hour12, m);
+  showBubble(displayText);
 
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(ttsText);
     utterance.lang = t.ttsLang;
     utterance.rate = t.ttsRate;
     utterance.pitch = t.ttsPitch;
