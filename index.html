@@ -493,11 +493,25 @@ const I18N = {
     },
     timeText: (h, m) => {
       const HOUR_READ = ['','いち','に','さん','よ','ご','ろく','しち','はち','く','じゅう','じゅういち','じゅうに'];
-      const ones = m % 10;
-      const pun = (ones === 1 || ones === 6 || ones === 8 || ones === 0);
-      const suffix = pun ? 'ぷん' : 'ふん';
       const hourWord = HOUR_READ[h];
-      return m === 0 ? `${hourWord}じ ちょうど！` : `${hourWord}じ ${m}${suffix}！`;
+      if (m === 0) return `${hourWord}じ ちょうど！`;
+
+      const tens = Math.floor(m / 10);
+      const ones = m % 10;
+      const TENS_BASE = ['', 'じゅう', 'にじゅう', 'さんじゅう', 'よんじゅう', 'ごじゅう'];
+
+      // 10, 20, 30, ... → じゅっぷん, にじゅっぷん, ...
+      if (ones === 0) {
+        return `${hourWord}じ ${TENS_BASE[tens].replace(/う$/, 'っ')}ぷん！`;
+      }
+
+      // 1-9の読み（ぷん/ふん付き）
+      const ONES_MIN = {
+        1: 'いっぷん', 2: 'にふん', 3: 'さんぷん', 4: 'よんふん', 5: 'ごふん',
+        6: 'ろっぷん', 7: 'ななふん', 8: 'はっぷん', 9: 'きゅうふん'
+      };
+
+      return `${hourWord}じ ${TENS_BASE[tens]}${ONES_MIN[ones]}！`;
     }
   },
   en: {
