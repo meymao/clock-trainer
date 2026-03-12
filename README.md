@@ -32,12 +32,11 @@ Supports Japanese 🇯🇵 and English 🇬🇧 — switchable with one tap.
 
 ---
 
-## ⚠️ Note on Japanese Pronunciation / 音声読み上げについて
+## ⚠️ Note on Japanese Pronunciation
 
-The Japanese voice readout uses the browser's built-in text-to-speech engine, which may mispronounce certain words — for example, reading "ごじゅっぷん" as "ごじゅうぷん". We recommend parents listen along and gently correct any inaccuracies as a natural part of the learning experience.
+The Japanese voice readout uses the browser's built-in text-to-speech engine, which may sound slightly unnatural in some cases. We recommend parents listen along and gently supplement where needed.
 
-
-日本語の読み上げはブラウザ内蔵の音声合成エンジンを使用しているため、一部の読み方が不正確になる場合があります（例：「ごじゅっぷん」が「ごじゅうぷん」と読まれるなど）。お子さんと一緒に使いながら、保護者の方が適宜フォローしていただけると幸いです。
+日本語の読み上げはブラウザ内蔵の音声合成エンジンを使用しているため、一部やや不自然に聞こえる場合があります。お子さんと一緒に使いながら、保護者の方が適宜フォローしていただけると幸いです。
 
 ---
 
